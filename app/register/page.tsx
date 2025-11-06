@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import {registrationAction} from "./registrationAction";
 
 // --- Added: Import icons from lucide-react ---
 import { User, Mail, Lock, LogIn } from "lucide-react"; 
@@ -42,15 +43,16 @@ const Register: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+    const registrationData =  {
+      name: formData.name,
+      email: formData.email,
+      userName: formData.username,
+      password: formData.password,
+      role: formData.role,
     }
-    console.log("Form Data:", formData);
+    await registrationAction(registrationData);
   };
 
 
@@ -84,7 +86,7 @@ const Register: React.FC = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="pl-10" // Add padding for the icon
+                    className="pl-10" 
                   />
                 </div>
               </div>
