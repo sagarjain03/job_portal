@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import {registrationAction} from "./registrationAction";
+import { registrationAction } from "@/features/auth/server/auth.actions";
+import { toast } from "sonner";
 
 // --- Added: Import icons from lucide-react ---
 import { User, Mail, Lock, LogIn } from "lucide-react"; 
@@ -52,7 +53,21 @@ const Register: React.FC = () => {
       password: formData.password,
       role: formData.role,
     }
-    await registrationAction(registrationData);
+
+    if(formData.password !== formData.confirmPassword){
+      toast.error("Passwords do not match");
+      return;
+    }
+
+      
+     const result =  await registrationAction(registrationData);
+
+     if(result.status==="success"){
+        toast.success(result.message)
+     }
+     else{
+        toast.error(result.message)
+     }
   };
 
 

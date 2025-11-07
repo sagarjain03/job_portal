@@ -1,1 +1,0 @@
-ALTER TABLE `users` MODIFY COLUMN `phone_number` varchar(15);

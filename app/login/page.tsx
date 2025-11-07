@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {loginUserAction} from "@/features/auth/server/auth.actions";
+import {toast} from "sonner";
 
 
 interface LoginFormData {
@@ -32,26 +34,26 @@ const Login: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
-    // --- Example Login Logic ---
-    // In a real app, you'd call an API here.
-    // We'll simulate a failed login for demonstration.
-    if (formData.email === "" || formData.password === "") {
-      setError("Please fill in both fields.");
-      return;
+    const LoginData =  {
+    
+      email: formData.email,
+      password: formData.password,
     }
 
-    // Example of a failed API call response
-    if (formData.password !== "password123") {
-      setError("Invalid email or password.");
-      return;
-    }
+   
 
-    console.log("Login Successful:", formData);
-    // TODO: Redirect to dashboard or another page
+
+     const result =  await loginUserAction(LoginData);
+
+     if(result.status==="success"){
+        toast.success(result.message)
+     }
+     else{
+        toast.error(result.message)
+     }
   };
 
   return (
