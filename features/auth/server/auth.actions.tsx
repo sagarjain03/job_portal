@@ -4,16 +4,15 @@ import { db } from "@/config/db";
 import { users } from "@/drizzle/schema";
 import { eq, or } from "drizzle-orm";
 import argon2 from "argon2";
+import { RegisterUserData, registerUserSchema } from "../auth.schema";
+import { LoginUserData,LoginUserSchema } from "../auth.schema";
 
-export const registrationAction = async (data: {
-  name: string;
-  email: string;
-  userName: string;
-  password: string;
-  role: "applicant" | "employer";
-}) => {
+export const registrationAction = async (data: RegisterUserData) => {
   try {
-    const { name, email, userName, password, role } = data;
+
+    const {data:validatedData,error}= registerUserSchema.safeParse(data);
+    if(error)return {status:"error",message:error.issues[0].message};
+    const { name, email, userName, password, role } = validatedData;
 
     // 1️⃣ Basic validation
     if (!name || !email || !userName || !password || !role) {
@@ -76,33 +75,35 @@ type LoginData = {
   password: string;
 };
 
-export const loginUserAction = async (data: LoginData) => {
+export const loginUserAction = async (data: unknown) => {
   try {
-    const { email, password } = data;
-
-    // 1️⃣ Basic validation
-    if (!email || !password) {
+    // ✅ Validate input using Zod
+    const parsed = LoginUserSchema.safeParse(data);
+    if (!parsed.success) {
       return {
         status: "error",
-        message: "Email and password are required",
+        message: parsed.error.errors[0]?.message || "Invalid input data",
       };
     }
 
-    // 2️⃣ Find user by email
+    const { email, password } = parsed.data;
+
+    // ✅ Fetch user from DB
     const existingUser = await db
       .select()
       .from(users)
       .where(eq(users.email, email));
 
-    if (existingUser.length === 0) {
+    if (!existingUser || existingUser.length === 0) {
       return {
         status: "error",
         message: "Invalid email or password",
       };
     }
 
-    // 3️⃣ Verify password
     const user = existingUser[0];
+
+    // ✅ Verify password
     const passwordMatch = await argon2.verify(user.password, password);
 
     if (!passwordMatch) {
@@ -112,7 +113,7 @@ export const loginUserAction = async (data: LoginData) => {
       };
     }
 
-    // 4️⃣ Success
+    // ✅ Login success
     return {
       status: "success",
       message: "Login successful 🎉",
@@ -120,11 +121,12 @@ export const loginUserAction = async (data: LoginData) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        userName: user.userName,
         role: user.role,
       },
     };
   } catch (error: any) {
-    console.error(error);
+    console.error("Login error:", error);
     return {
       status: "error",
       message: "Login failed. Please try again.",
